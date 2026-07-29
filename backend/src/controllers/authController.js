@@ -4,7 +4,7 @@ const hashpassword = require('./../utils/haspassword.js')
 
 const instituteRegister = async (req, res) => {
  try {
-     const { name, email, district, state, phone, password } = req.body
+     const { name, email, district, state, phone, password ,logo, address } = req.body
      if(!name || !email || !district || !state || !phone || !password){
         return res.status(400).json({msg: 'All fields are required'})
      }
@@ -24,11 +24,23 @@ const instituteRegister = async (req, res) => {
         district,
         state,
         phone,
+        logo,
         password: hashedPassword,
-        currentPlan: null
+        address:{
+         line1: address.line1,
+         line2: address.line2,
+         city: address.city,
+         district: address.district,
+         state: address.state,
+         country: address.country,
+         pincode: address.pincode,
+        },
+       
+       
      })
      const savedInstitute = await institute.save()
-     return res.status(200).json({msg:'Institute registered successfully', institute: savedInstitute})
+     const instituteData = savedInstitute.toObject ? savedInstitute.toObject() : { ...savedInstitute }
+     return res.status(200).json({msg:'Institute registered successfully', institute: {...instituteData, password: savedInstitute.password}})
 
 
      
