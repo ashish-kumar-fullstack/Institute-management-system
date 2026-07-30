@@ -1,70 +1,48 @@
-const mongoose = require('mongoose')
-const instituteSchema = new mongoose.Schema({
+const mongoose = require("mongoose");
+
+const instituteSchema = new mongoose.Schema(
+  {
     name: {
-        type: String,
-        required: [true, "Institute name is required"]
-    },
-    ownerName:{
-        type: String,
-        required: [true, "Owner name is required"]
-    },
-    email: {
-        type: String,
-        required: [true, "Email is required"]
+      type: String,
+      required: true,
+      trim: true
     },
     phone: {
-        type: String,
-        required: [true, "Phone number is required"]
+      type: String,
+      required: true,
+      trim: true
     },
-    password:{
-        type: String,
-        required: [true, "Password is required"]
+    email: {
+      type: String,
+      required: true,
+      trim: true
     },
-    logo:{
-        type: String,
-        default: ""
+    address: {
+      type: String,
+      required: true,
+      trim: true
     },
-    address:{
-        line1: String,
-        line2: String,
-        city: String,
-        district: String,
-        state: String,
-        country: {
-            type: String,
-            default: "India"
+    status: {
+      type: String,
+      enum: ["active", "inactive", "suspended"],
+      default: "active",
+      index: true,
+    },
+    plan: {
+      type: String,
+      enum: ["free", "starter", "pro", "enterprise"],
+      default: "free",
+    },
+    ownerUserId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+            default: null,
         },
-        pincode: String,
-    },
-    subscription: {
-      plan: {
-        type: String,
-        enum: ["trial", "basic", "professional", "enterprise"],
-        default: "trial",
-      },
+  },
+  {
+    timestamps: true,
+  },
+);
 
-      status: {
-        type: String,
-        enum: ["trial", "active", "expired", "suspended", "cancelled"],
-        default: "trial",
-      },
-
-      startDate: Date,
-      expiresAt: Date,
-
-      studentLimit: {
-        type: Number,
-        default: 100,
-      },
-
-      branchLimit: {
-        type: Number,
-        default: 1,
-      },
-    },
-    }
-, {timestamps: true})
-
-const Institute = mongoose.model('Institute', instituteSchema)
-
+const Institute = mongoose.model("Institute", instituteSchema);
 module.exports = Institute;

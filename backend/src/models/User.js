@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
+const { USER_ROLE } = require("../constants/Role");
 
-const studentSchema = new mongoose.Schema(
+const userSchema = new mongoose.Schema(
   {
     InstituteId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -36,12 +37,13 @@ const studentSchema = new mongoose.Schema(
     role: {
         type: String,
         enum: USER_ROLE,
-        default: "student",
+        default: "user",
     },
-    couser: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Course",
-        default: null,
-    }
-},{timestamps: true})
+  },
+  {
+    timestamps: true,
+  },
+);
 
+const User = mongoose.model("User", userSchema);
+module.exports = User;
