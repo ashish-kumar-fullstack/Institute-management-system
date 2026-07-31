@@ -1,49 +1,74 @@
 const mongoose = require("mongoose");
-const { USER_ROLE } = require("../constants/Role");
+const bcrypt = require("bcrypt");
 
 const userSchema = new mongoose.Schema(
   {
-    InstituteId: {
+    instituteId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Institute",
-      default: null,
+      required: true,
+      index: true,
     },
+
     name: {
       type: String,
       required: true,
-      trim: true
+      trim: true,
+      maxlength: 100,
     },
-    phone: {
-      type: String,
-      required: true,
-      trim: true
-    },
+
     email: {
       type: String,
       required: true,
-      trim: true
+      lowercase: true,
+      trim: true,
     },
-    password: {
+
+    passwordHash: {
       type: String,
       required: true,
-      trim: true
+      select: false,
     },
-    status: {
-      type: String,
-      enum: ["active", "inactive", "suspended"],
-      default: "active",
-      index: true,
-    },
+
     role: {
-        type: String,
-        enum: USER_ROLE,
-        default: "user",
+      type: String,
+      enum: ["institute_admin", "teacher", "accountant"],
+      default: "institute_admin",
+    },
+
+    isActive: {
+      type: Boolean,
+      default: true,
+      index: true,
     },
   },
   {
     timestamps: true,
-  },
+  }
 );
 
-const User = mongoose.model("User", userSchema);
+// Email must be unique only inside one institute
+userSchema.index(
+  {
+    instituteId: 1,
+    email: 1,
+  },
+  {
+    unique: true,
+  }
+);
+
+// Used during registration
+userSchema.statics.hashPassword = async function (password) {
+  return bcrypt.hash(password, 12);
+};
+
+// Used during login
+userSchema.methods.comparePassword = async function (password) {
+  return bcrypt.compare(password, this.passwordHash);
+};
+
+const User =
+  mongoose.models.User || mongoose.model("User", userSchema);
+
 module.exports = User;

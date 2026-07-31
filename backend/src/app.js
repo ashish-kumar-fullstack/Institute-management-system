@@ -8,8 +8,13 @@ connectDB()
 
 app.use(express.json())
 app.use(express.urlencoded({extended: true}))
+app.use(cookieParser())
 
-const authRouter = require('./routes/authRoute')
+const authRouter = require('./routes/authRoute.js')
+const userRouter = require('./routes/userRoute.js')
+
 app.use('/auth', authRouter)
+app.use('/user', userRouter)
+
 
 module.exports = app;

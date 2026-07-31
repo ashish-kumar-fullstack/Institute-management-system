@@ -1,48 +1,38 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose')
 
-const instituteSchema = new mongoose.Schema(
-  {
-    name: {
-      type: String,
-      required: true,
-      trim: true
-    },
-    phone: {
-      type: String,
-      required: true,
-      trim: true
-    },
-    email: {
-      type: String,
-      required: true,
-      trim: true
-    },
-    address: {
-      type: String,
-      required: true,
-      trim: true
-    },
-    status: {
-      type: String,
-      enum: ["active", "inactive", "suspended"],
-      default: "active",
-      index: true,
-    },
-    plan: {
-      type: String,
-      enum: ["free", "starter", "pro", "enterprise"],
-      default: "free",
-    },
-    ownerUserId: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "User",
-            default: null,
-        },
+const tenantSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required : true, 
+    trim: true,
+    maxLength:120
   },
-  {
-    timestamps: true,
+  slug: {
+    type: String,
+    required: true,
+    unique: true,
+    lowercase: true,
+    trim: true,
+    match: /^[a-zA-Z0-9-]+$/
   },
-);
+  status:{
+    type: String,
+    enum: ["active","suspended", "inactive"],
+    default: "active",
+    index: true
+  },
+  ownerUserId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref:"User",
+    default: null
+  },
+  setting: {
+    currency: {type: String, default: "INR"},
+    timezone: {type: String , default: "Asia/Kolkata"},
+    dateFormate: {type: String, default: "DD-MM-YYYY"}
+  }
+},
+{timestamps: true})
 
-const Institute = mongoose.model("Institute", instituteSchema);
-module.exports = Institute;
+ const Tenant = mongoose.model("Tenant", tenantSchema);
+module.exports = Tenant
