@@ -4,6 +4,7 @@ const app = express()
 const connectDB = require('./config/db')
 connectDB()
 
+const errorMiddleware = require('./middleware/errorMiddleware.js')
 const cookieParser = require('cookie-parser')
 const cors = require('cors')
 app.use(
