@@ -16,10 +16,7 @@ const registerInstitute = asyncHandler(async (req, res) => {
   }
 
   if (password.length < 6) {
-    throw new ApiError(
-      400,
-      "Password must contain at least 6 characters"
-    );
+    throw new ApiError(400, "Password must contain at least 6 characters");
   }
 
   const normalizedEmail = email.toLowerCase().trim();
@@ -131,16 +128,10 @@ const login = asyncHandler(async (req, res) => {
   }
 
   if (!user.passwordHash) {
-    throw new ApiError(
-      500,
-      "Password hash is missing for this user"
-    );
+    throw new ApiError(500, "Password hash is missing for this user");
   }
 
-  const isPasswordValid = await bcrypt.compare(
-    password,
-    user.passwordHash
-  );
+  const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
 
   if (!isPasswordValid) {
     throw new ApiError(401, "Invalid email or password");
@@ -176,7 +167,50 @@ const login = asyncHandler(async (req, res) => {
   });
 });
 
+const getMe = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.userId).select(
+      "_id instituteId name email role isActive"
+    );
+
+    if (!user) {
+      throw new ApiError(404, "User is no longer available");
+    }
+
+    if (!user.isActive) {
+      throw new ApiError(403, "Your account is inactive");
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "User fetched successfully",
+      data: {
+        user: {
+          id: user._id,
+          instituteId: user.instituteId,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          isActive: user.isActive,
+        },
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const logout = async (req, res)=>{
+  res.clearCookie("accessToken", {
+    httpOnly: true,
+    secure: true
+  });
+ res.status(200).json({success: true, message: "Logout successful"})
+}
+
 module.exports = {
   registerInstitute,
   login,
+  getMe,
+  logout
 };

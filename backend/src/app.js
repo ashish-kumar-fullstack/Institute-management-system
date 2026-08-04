@@ -1,6 +1,7 @@
 const dotenv = require('dotenv').config()
 const express = require('express')
 const app = express()
+app.disable("etag");
 const connectDB = require('./config/db')
 connectDB()
 
@@ -26,6 +27,8 @@ const userRouter = require('./routes/userRoute.js')
 
 app.use('/auth', authRouter)
 app.use('/user', userRouter)
+
+app.use(errorMiddleware);
 
 
 module.exports = app;

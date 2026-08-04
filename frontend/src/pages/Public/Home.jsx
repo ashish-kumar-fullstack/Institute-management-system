@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import Hero from '../../../public/images/Hero.jpeg'
+import Hero from '/images/Hero.jpeg'
 
 const Home = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);

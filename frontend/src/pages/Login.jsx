@@ -1,171 +1,48 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../Context/AuthContext.jsx";
 
-const initialFormData = {
-  email: "",
-  password: "",
- };
-
-const Login = ()=> {
-  const navigate = useNavigate();
-
-  const [formData, setFormData] = useState(initialFormData);
-  const [errors, setErrors] = useState({});
-  const [apiError, setApiError] = useState("");
+const Login = () => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const validateForm = () => {
-    const newErrors = {};
-    if (!formData.email.trim()) {
-      newErrors.email = "Email address is required";
-    } else if (
-      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())
-    ) {
-      newErrors.email = "Please enter a valid email address";
-    }
+  const { login, user} = useAuth();
+  const navigate = useNavigate();
 
-    if (!formData.password) {
-      newErrors.password = "Password is required";
-    } else if (formData.password.length < 6) {
-      newErrors.password =
-        "Password must contain at least 6 characters";
-    }
-
-    setErrors(newErrors);
-
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleChange = (event) => {
-    const { name, value, type, checked } = event.target;
-
-    let updatedValue = type === "checkbox" ? checked : value;
-
-    if (name === "tenantSlug") {
-      updatedValue = value
-        .toLowerCase()
-        .replace(/\s+/g, "-")
-        .replace(/[^a-z0-9-]/g, "")
-        .replace(/-+/g, "-")
-        .replace(/^-+/, "");
-    }
-
-    setFormData((previousData) => ({
-      ...previousData,
-      [name]: updatedValue,
-    }));
-
-    setErrors((previousErrors) => ({
-      ...previousErrors,
-      [name]: "",
-    }));
-
-    setApiError("");
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setErrorMessage("");
     setSuccessMessage("");
-  };
-
- const getDashboardRoute = (role) => {
-  const roleRoutes = {
-    super_admin: "/super-admin/dashboard",
-    institute_admin: "/admin/dashboard",
-    teacher: "/teacher/dashboard",
-    accountant: "/accountant/dashboard",
-  };
-
-  return roleRoutes[role] || "/unauthorized";
-};
-
-const handleSubmit = async (event) => {
-  event.preventDefault();
-
-  setApiError("");
-  setSuccessMessage("");
-
-  if (!validateForm()) {
-    return;
-  }
-
-  const requestData = {
-    email: formData.email.toLowerCase().trim(),
-    password: formData.password,
-  };
-
-  try {
-    setIsLoading(true);
-
-    const response = await fetch(
-      `${import.meta.env.VITE_API_BASE_URL}/auth/login`,
-      {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify(requestData),
-      }
-    );
-
-    const contentType = response.headers.get("content-type");
-
-    let result;
-
-    if (contentType?.includes("application/json")) {
-      result = await response.json();
-    } else {
-      const rawResponse = await response.text();
-
-      console.error("Backend returned non-JSON:", rawResponse);
-
-      throw new Error(
-        `Server returned an invalid response (${response.status})`
-      );
+    if (!email || !password) {
+      setErrorMessage("Please enter email and password");
+      return;
     }
-
-    if (!response.ok) {
-      throw new Error(
-        result.message ||
-          result.error ||
-          "Invalid email or password"
-      );
+    try {
+      setIsLoading(true);
+      const user = await login(email, password);
+      setSuccessMessage("Login successful");
+      setTimeout(() => {
+        if (user.role === "institute_admin") {
+          navigate("/admin/dashboard");
+        } else {
+          navigate("/", { replace: true });
+        }
+      }, 1000);
+    } catch (error) {
+      setErrorMessage(error.message || "Login failed");
+    } finally {
+      setIsLoading(false);
+      console.log(user);
+      
     }
-
-    const loggedInUser = result.data?.user;
-
-    if (!loggedInUser?.role) {
-      throw new Error("User role was not returned by the server");
-    }
-
-    setSuccessMessage(result.message || "Login successful");
-
-    const dashboardRoute = getDashboardRoute(loggedInUser.role);
-
-    navigate(dashboardRoute, {
-      replace: true,
-    });
-  } catch (error) {
-    setApiError(
-      error.message ||
-        "Something went wrong. Please try again."
-    );
-  } finally {
-    setIsLoading(false);
-  }
-};
-
-  const inputClassName = (fieldName) => {
-    return `w-full rounded-lg border px-4 py-3 text-gray-900 outline-none transition placeholder:text-gray-400 ${
-      errors[fieldName]
-        ? "border-red-500 bg-red-50 focus:border-red-500 focus:ring-2 focus:ring-red-100"
-        : "border-gray-300 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-    }`;
   };
 
   return (
     <section className="min-h-screen bg-gray-50">
       <div className="mx-auto grid min-h-screen max-w-7xl grid-cols-1 items-center gap-10 px-4 py-10 sm:px-6 md:grid-cols-2 lg:px-8">
-        {/* Left content */}
         <div className="hidden md:block">
           <div className="max-w-xl">
             <span className="inline-flex rounded-full bg-blue-100 px-4 py-2 text-sm font-semibold text-blue-700">
@@ -179,8 +56,7 @@ const handleSubmit = async (event) => {
 
             <p className="mt-6 text-lg leading-8 text-gray-600 lg:text-xl">
               Manage students, teachers, attendance, fees, batches,
-              examinations, and institute operations from one secure
-              platform.
+              examinations, and institute operations from one secure platform.
             </p>
 
             <div className="mt-8 flex flex-wrap items-center gap-4">
@@ -227,8 +103,7 @@ const handleSubmit = async (event) => {
               </h2>
 
               <p className="mt-2 text-sm text-gray-500">
-                Login to your account to start managing your
-                operations.
+                Login to your account to start managing your operations.
               </p>
             </div>
 
@@ -245,18 +120,12 @@ const handleSubmit = async (event) => {
                   id="email"
                   name="email"
                   type="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  placeholder="admin@example.com"
+                  required
                   autoComplete="email"
-                  className={inputClassName("email")}
+                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
                 />
-
-                {errors.email && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {errors.email}
-                  </p>
-                )}
               </div>
 
               <div className="">
@@ -272,29 +141,21 @@ const handleSubmit = async (event) => {
                     id="password"
                     name="password"
                     type="password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    placeholder="Minimum 6 characters"
-                    autoComplete="new-password"
-                    className={inputClassName("password")}
+                    required
+                   className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                    autoComplete="current-password"
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
                   />
-
-                  {errors.password && (
-                    <p className="mt-1 text-sm text-red-600">
-                      {errors.password}
-                    </p>
-                  )}
                 </div>
               </div>
-
-
-              {apiError && (
+              {errorMessage && (
                 <div
                   role="alert"
-                  className="rounded-lg border border-red-200 bg-red-50 p-4"
+                  className="rounded-lg border border-red-200 bg-red-50 p-3"
                 >
                   <p className="text-sm font-medium text-red-700">
-                    {apiError}
+                    {errorMessage}
                   </p>
                 </div>
               )}
@@ -302,7 +163,7 @@ const handleSubmit = async (event) => {
               {successMessage && (
                 <div
                   role="status"
-                  className="rounded-lg border border-green-200 bg-green-50 p-4"
+                  className="rounded-lg border border-green-200 bg-green-50 p-3"
                 >
                   <p className="text-sm font-medium text-green-700">
                     {successMessage}
@@ -313,9 +174,9 @@ const handleSubmit = async (event) => {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="flex w-full items-center justify-center rounded-lg bg-blue-600 px-6 py-3 font-semibold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-blue-400"
+                className="flex w-full items-center justify-center rounded-lg bg-blue-600 px-6 py-3 font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-400"
               >
-                {isLoading ? "Logging in..." : "Login to your account"}
+                {isLoading ? "Logging in..." : "Login"}
               </button>
             </form>
 
